@@ -34,7 +34,8 @@ const tracker = new BehaviorTracker({
   trackClicks: true,
   riskThreshold: 0.7,
   minTimeSpent: 10000,    // 10 seconds - minimum time before considering it suspicious
-  maxTimeSpent: 600000    // 10 minutes - maximum time before considering it suspicious
+  maxTimeSpent: 600000,   // 10 minutes - maximum time before considering it suspicious
+  throttleDelay: 150      // 150ms throttle delay to prevent excessive event tracking
 });
 
 // Start tracking user behavior
@@ -96,6 +97,7 @@ interface TrackingOptions {
   riskThreshold?: number;         // Threshold for risk score (default: 0.7)
   minTimeSpent?: number;          // Minimum time in milliseconds before considering it suspicious (default: 5000ms)
   maxTimeSpent?: number;          // Maximum time in milliseconds before considering it suspicious (default: 300000ms)
+  throttleDelay?: number;         // Throttle delay in milliseconds to prevent excessive event tracking (default: 100ms)
 }
 ```
 
@@ -119,6 +121,26 @@ const tracker = new BehaviorTracker({
 const tracker = new BehaviorTracker({
   minTimeSpent: 2000,     // 2 seconds minimum
   maxTimeSpent: 120000    // 2 minutes maximum
+});
+```
+
+### Event Throttling
+
+The package includes built-in event throttling to prevent excessive event tracking and improve performance:
+
+- Events are throttled based on the `throttleDelay` parameter (default: 100ms)
+- This prevents rapid-fire events from overwhelming the tracking system
+- You can adjust the throttle delay based on your needs:
+
+```typescript
+// Example: More aggressive throttling for high-frequency events
+const tracker = new BehaviorTracker({
+  throttleDelay: 200      // 200ms throttle delay
+});
+
+// Example: Less throttling for more detailed tracking
+const tracker = new BehaviorTracker({
+  throttleDelay: 50       // 50ms throttle delay
 });
 ```
 

@@ -49,4 +49,5 @@ export interface TrackingOptions {
   riskThreshold?: number;
   minTimeSpent?: number;  // Minimum time in milliseconds before considering it suspicious
   maxTimeSpent?: number;  // Maximum time in milliseconds before considering it suspicious
+  throttleDelay?: number; // Throttle delay in milliseconds to prevent excessive event tracking
 } 

@@ -10,7 +10,7 @@ export class BehaviorTracker {
   private static readonly STORAGE_KEY = 'web_behavior_tracker_session';
   private debounceTimers: Map<string, number> = new Map();
   private lastInputValues: Map<string, string> = new Map();
-  private static readonly THROTTLE_DELAY = 100; // 100ms throttle delay
+  private THROTTLE_DELAY: number = 100; // 100ms throttle delay
   private lastThrottledEvent: number = 0;
 
   constructor(options: TrackingOptions = {}) {
@@ -27,6 +27,7 @@ export class BehaviorTracker {
       ...options
     };
     
+    this.THROTTLE_DELAY = options.throttleDelay || 100;
     this.sessionId = this.getOrCreateSessionId();
     this.loadSessionData();
   }
@@ -330,7 +331,7 @@ export class BehaviorTracker {
 
     // Throttle events
     const now = Date.now();
-    if (now - this.lastThrottledEvent < BehaviorTracker.THROTTLE_DELAY) {
+    if (now - this.lastThrottledEvent < this.THROTTLE_DELAY) {
       return;
     }
     this.lastThrottledEvent = now;
