@@ -1,0 +1,52 @@
+export interface BehaviorEvent {
+  type: 'focus' | 'blur' | 'change' | 'input' | 'click' | 'invalid' | 'reset' | 'submit' | 
+        'mouseover' | 'mouseout' | 'select-change' | 'checkbox-radio-change' | 'form-submit';
+  elementId: string;
+  elementType: string;
+  timestamp: number;
+  value: string | boolean | string[] | null;
+  pageUrl: string;
+  elementAttributes: Record<string, string>;
+  elementState?: Record<string, any>;
+  selectedOptions?: Array<{
+    value: string;
+    text: string;
+    selected: boolean;
+  }>;
+}
+
+export interface FormField {
+  id: string;
+  type: string;
+  name: string;
+  value: string;
+  isRequired: boolean;
+}
+
+export interface BehaviorMetrics {
+  timeSpent: number;
+  fieldInteractions: number;
+  fieldChanges: number;
+  focusCount: number;
+  blurCount: number;
+  mouseInteractions: number;
+}
+
+export interface BehaviorInsights {
+  riskScore: number;
+  suspiciousPatterns: string[];
+  completionRate: number;
+  averageTimePerField: number;
+  fieldInteractionOrder: string[];
+}
+
+export interface TrackingOptions {
+  trackMouseMovements?: boolean;
+  trackFocusBlur?: boolean;
+  trackInputChanges?: boolean;
+  trackClicks?: boolean;
+  customEvents?: string[];
+  riskThreshold?: number;
+  minTimeSpent?: number;  // Minimum time in milliseconds before considering it suspicious
+  maxTimeSpent?: number;  // Maximum time in milliseconds before considering it suspicious
+} 
