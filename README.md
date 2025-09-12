@@ -5,6 +5,7 @@ A framework-agnostic npm package for tracking user behavior on web forms. This p
 ## Features
 
 - Track user interactions with form fields (focus, blur, input, change)
+- **Track copy-paste operations** (copy, paste, cut events with clipboard data)
 - Monitor mouse movements and clicks
 - Calculate risk scores based on user behavior
 - Detect suspicious patterns (rapid form filling, copy-paste behavior, etc.)
@@ -32,6 +33,7 @@ const tracker = new BehaviorTracker({
   trackFocusBlur: true,
   trackInputChanges: true,
   trackClicks: true,
+  trackCopyPaste: true,   // Track copy-paste operations (default: true)
   riskThreshold: 0.7,
   minTimeSpent: 10000,    // 10 seconds - minimum time before considering it suspicious
   maxTimeSpent: 600000,   // 10 minutes - maximum time before considering it suspicious
@@ -52,6 +54,9 @@ const metrics = tracker.getMetrics();
 console.log('Time spent:', metrics.timeSpent);
 console.log('Field interactions:', metrics.fieldInteractions);
 console.log('Field changes:', metrics.fieldChanges);
+console.log('Copy operations:', metrics.copyCount);
+console.log('Paste operations:', metrics.pasteCount);
+console.log('Cut operations:', metrics.cutCount);
 
 // Get insights and risk assessment
 const insights = tracker.getInsights();
@@ -67,6 +72,66 @@ const sessionId = tracker.getSessionId();
 
 // Clear the current session data
 tracker.clearSession();
+```
+
+## Copy-Paste Tracking
+
+The library now includes comprehensive copy-paste tracking capabilities:
+
+### Features
+
+- **Explicit Event Tracking**: Captures `copy`, `paste`, and `cut` events on form elements
+- **Clipboard Data**: Records clipboard content and data types when available
+- **Element Context**: Tracks which form field the operation occurred on
+- **Timestamps**: Records when each operation happened
+- **Fallback Detection**: Uses rapid input events as indicators of copy-paste behavior
+
+### Usage
+
+```typescript
+// Copy-paste tracking is enabled by default
+const tracker = new BehaviorTracker({
+  trackCopyPaste: true  // This is the default
+});
+
+// Get copy-paste metrics
+const metrics = tracker.getMetrics();
+console.log('Copy operations:', metrics.copyCount);
+console.log('Paste operations:', metrics.pasteCount);
+console.log('Cut operations:', metrics.cutCount);
+
+// Get all events including copy-paste events
+const events = tracker.getEvents();
+const copyPasteEvents = events.filter(e => ['copy', 'paste', 'cut'].includes(e.type));
+
+// Each copy-paste event includes:
+copyPasteEvents.forEach(event => {
+  console.log('Event type:', event.type);
+  console.log('Element:', event.elementId);
+  console.log('Clipboard data:', event.clipboardData);
+  console.log('Timestamp:', new Date(event.timestamp));
+});
+```
+
+### Event Data Structure
+
+Copy-paste events include additional `clipboardData` information:
+
+```typescript
+interface ClipboardData {
+  types: string[];  // Available clipboard data types (e.g., ['text/plain'])
+  data: string;     // The actual clipboard content
+}
+```
+
+### Disabling Copy-Paste Tracking
+
+If you don't want to track copy-paste operations:
+
+```typescript
+const tracker = new BehaviorTracker({
+  trackCopyPaste: false
+});
 ```
 
 ## Cross-Page Tracking
@@ -113,6 +178,7 @@ interface TrackingOptions {
   trackFocusBlur?: boolean;       // Track focus and blur events (default: true)
   trackInputChanges?: boolean;    // Track input and change events (default: true)
   trackClicks?: boolean;          // Track click events (default: true)
+  trackCopyPaste?: boolean;       // Track copy-paste operations (default: true)
   customEvents?: string[];        // Additional events to track
   riskThreshold?: number;         // Threshold for risk score (default: 0.7)
   minTimeSpent?: number;          // Minimum time in milliseconds before considering it suspicious (default: 5000ms)
@@ -173,6 +239,7 @@ The package provides the following metrics:
 - Number of field changes
 - Focus and blur counts
 - Mouse interaction counts
+- **Copy, paste, and cut operation counts**
 - Cross-page navigation patterns
 - Page-specific interaction data
 

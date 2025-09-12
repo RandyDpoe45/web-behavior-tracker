@@ -20,6 +20,7 @@ export class BehaviorTracker {
       trackFocusBlur: true,
       trackInputChanges: true,
       trackClicks: true,
+      trackCopyPaste: true,
       customEvents: [],
       riskThreshold: 0.7,
       minTimeSpent: 5000,
@@ -106,7 +107,10 @@ export class BehaviorTracker {
       fieldChanges: 0,
       focusCount: 0,
       blurCount: 0,
-      mouseInteractions: 0
+      mouseInteractions: 0,
+      copyCount: 0,
+      pasteCount: 0,
+      cutCount: 0
     };
 
     this.events.forEach(event => {
@@ -127,6 +131,15 @@ export class BehaviorTracker {
         case 'mouseover':
         case 'mouseout':
           metrics.mouseInteractions++;
+          break;
+        case 'copy':
+          metrics.copyCount++;
+          break;
+        case 'paste':
+          metrics.pasteCount++;
+          break;
+        case 'cut':
+          metrics.cutCount++;
           break;
       }
     });
@@ -225,6 +238,13 @@ export class BehaviorTracker {
         this.handleFormSubmit(event);
       }
     }, true);
+
+    // Track copy-paste events if enabled
+    if (this.options.trackCopyPaste) {
+      document.addEventListener('copy', this.handleCopyPasteEvent.bind(this), true);
+      document.addEventListener('paste', this.handleCopyPasteEvent.bind(this), true);
+      document.addEventListener('cut', this.handleCopyPasteEvent.bind(this), true);
+    }
   }
 
   private removeEventListeners(): void {
@@ -246,6 +266,13 @@ export class BehaviorTracker {
     });
 
     document.removeEventListener('input', this.handleInputEvent.bind(this), true);
+
+    // Remove copy-paste event listeners if they were added
+    if (this.options.trackCopyPaste) {
+      document.removeEventListener('copy', this.handleCopyPasteEvent.bind(this), true);
+      document.removeEventListener('paste', this.handleCopyPasteEvent.bind(this), true);
+      document.removeEventListener('cut', this.handleCopyPasteEvent.bind(this), true);
+    }
   }
 
   private handleInputEvent(event: Event): void {
@@ -525,6 +552,40 @@ export class BehaviorTracker {
     this.saveSessionData({ sessionId: this.sessionId, events: this.events });
   }
 
+  private handleCopyPasteEvent(event: ClipboardEvent): void {
+    if (!this.isTracking || !this.options.trackCopyPaste) return;
+
+    const target = event.target as HTMLElement;
+    if (!target) return;
+
+    // Check if the element is a form element or has a form-related role
+    const isFormElement = this.isFormElement(target);
+    if (!isFormElement) return;
+
+    // Get clipboard data if available
+    let clipboardData: { types: string[]; data: string } | undefined;
+    if (event.clipboardData) {
+      const types = Array.from(event.clipboardData.types);
+      const data = event.clipboardData.getData('text/plain');
+      clipboardData = { types, data };
+    }
+
+    const behaviorEvent: BehaviorEvent = {
+      type: event.type as 'copy' | 'paste' | 'cut',
+      elementId: target.id || '',
+      elementType: target.tagName.toLowerCase(),
+      timestamp: Date.now(),
+      value: this.getElementValue(target),
+      pageUrl: window.location.pathname,
+      elementAttributes: this.getElementAttributes(target),
+      elementState: this.getElementState(target),
+      clipboardData
+    };
+
+    this.events.push(behaviorEvent);
+    this.saveSessionData({ sessionId: this.sessionId, events: this.events });
+  }
+
   private getElementPath(element: HTMLElement): string {
     const path: string[] = [];
     let current: HTMLElement | null = element;
@@ -569,15 +630,21 @@ export class BehaviorTracker {
       patterns.push('Unusual focus pattern detected');
     }
 
-    // Detect copy-paste behavior
+    // Detect copy-paste behavior using explicit events
+    const copyPasteEvents = this.events.filter(e => ['copy', 'paste', 'cut'].includes(e.type));
+    if (copyPasteEvents.length > 0) {
+      patterns.push(`${copyPasteEvents.length} copy-paste operations detected`);
+    }
+
+    // Detect rapid input events as fallback for copy-paste detection
     const inputEvents = this.events.filter(e => e.type === 'input');
     const rapidInputs = inputEvents.filter((event, index) => {
       if (index === 0) return false;
       return event.timestamp - inputEvents[index - 1].timestamp < 50;
     });
 
-    if (rapidInputs.length > 3) {
-      patterns.push('Possible copy-paste behavior detected');
+    if (rapidInputs.length > 3 && copyPasteEvents.length === 0) {
+      patterns.push('Possible copy-paste behavior detected (rapid input)');
     }
 
     return patterns;
@@ -623,8 +690,8 @@ export class BehaviorTracker {
     this.sessionId = this.getOrCreateSessionId();
   }
 
-  private getElementState(element: HTMLElement): Record<string, any> {
-    const state: Record<string, any> = {};
+  private getElementState(element: HTMLElement): Record<string, unknown> {
+    const state: Record<string, unknown> = {};
 
     if (element instanceof HTMLInputElement) {
       state.checked = element.checked;

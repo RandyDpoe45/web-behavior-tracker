@@ -1,6 +1,7 @@
 export interface BehaviorEvent {
   type: 'focus' | 'blur' | 'change' | 'input' | 'click' | 'invalid' | 'reset' | 'submit' | 
-        'mouseover' | 'mouseout' | 'select-change' | 'checkbox-radio-change' | 'form-submit';
+        'mouseover' | 'mouseout' | 'select-change' | 'checkbox-radio-change' | 'form-submit' |
+        'copy' | 'paste' | 'cut';
   elementId: string;
   elementType: string;
   timestamp: number;
@@ -13,6 +14,10 @@ export interface BehaviorEvent {
     text: string;
     selected: boolean;
   }>;
+  clipboardData?: {
+    types: string[];
+    data: string;
+  };
 }
 
 export interface FormField {
@@ -30,6 +35,9 @@ export interface BehaviorMetrics {
   focusCount: number;
   blurCount: number;
   mouseInteractions: number;
+  copyCount: number;
+  pasteCount: number;
+  cutCount: number;
 }
 
 export interface BehaviorInsights {
@@ -45,6 +53,7 @@ export interface TrackingOptions {
   trackFocusBlur?: boolean;
   trackInputChanges?: boolean;
   trackClicks?: boolean;
+  trackCopyPaste?: boolean;
   customEvents?: string[];
   riskThreshold?: number;
   minTimeSpent?: number;  // Minimum time in milliseconds before considering it suspicious
