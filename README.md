@@ -41,6 +41,9 @@ const tracker = new BehaviorTracker({
 // Start tracking user behavior
 tracker.startTracking();
 
+// Start tracking with session reset (clears previous session data)
+tracker.startTracking(true);
+
 // Later, when you want to stop tracking
 tracker.stopTracking();
 
@@ -82,6 +85,23 @@ To use cross-page tracking:
 2. The tracker will automatically maintain the session across page navigations
 3. Use `getSessionId()` to get the current session identifier
 4. Use `clearSession()` to manually clear the session data
+
+### Session Reset on Start
+
+The `startTracking()` method now accepts an optional `reset` parameter:
+
+```typescript
+// Start tracking without clearing existing session data
+tracker.startTracking();
+
+// Start tracking and clear all previous session data
+tracker.startTracking(true);
+```
+
+This is useful when you want to:
+- Start fresh tracking for a new user session
+- Clear accumulated data before starting a new form flow
+- Reset tracking state programmatically without calling `clearSession()` separately
 
 ## Configuration Options
 

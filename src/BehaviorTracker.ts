@@ -56,9 +56,11 @@ export class BehaviorTracker {
     }
   }
 
-  public startTracking(): void {
+  public startTracking(reset: boolean = false): void {
     if (this.isTracking) return;
-    this.clearSession();
+    if (reset) {
+      this.clearSession();
+    }
     
     this.isTracking = true;
     this.startTime = Date.now();
