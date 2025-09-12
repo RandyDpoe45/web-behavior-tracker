@@ -1,6 +1,6 @@
 {
   "name": "@randyd45/web-behavior-tracker",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A framework-agnostic package for tracking user behavior on web forms",
   "main": "dist/index.js",
   "module": "dist/index.js",
