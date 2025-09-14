@@ -1,3 +1,18 @@
+export interface ElementState {
+  checked?: boolean;
+  disabled?: boolean;
+  readOnly?: boolean;
+  required?: boolean;
+  valid?: boolean;
+  validationMessage?: string;
+  selectedIndex?: number;
+  selectedOptions?: Array<{
+    value: string;
+    text: string;
+    index: number;
+  }>;
+}
+
 export interface BehaviorEvent {
   type: 'focus' | 'blur' | 'change' | 'input' | 'click' | 'invalid' | 'reset' | 'submit' | 
         'mouseover' | 'mouseout' | 'select-change' | 'checkbox-radio-change' | 'form-submit' |
@@ -8,7 +23,7 @@ export interface BehaviorEvent {
   value: string | boolean | string[] | null;
   pageUrl: string;
   elementAttributes: Record<string, string>;
-  elementState?: Record<string, any>;
+  elementState?: ElementState;
   selectedOptions?: Array<{
     value: string;
     text: string;

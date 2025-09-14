@@ -1,6 +1,6 @@
 {
   "name": "@randyd45/web-behavior-tracker",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "A framework-agnostic package for tracking user behavior on web forms",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -23,7 +23,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/RandyD45/web-behavior-tracker.git"
+    "url": "git+https://github.com/RandyDpoe45/web-behavior-tracker.git"
   },
   "keywords": [
     "behavior-tracking",
@@ -37,9 +37,9 @@
   "author": "RandyD45",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/RandyD45/web-behavior-tracker/issues"
+    "url": "https://github.com/RandyDpoe45/web-behavior-tracker/issues"
   },
-  "homepage": "https://github.com/RandyD45/web-behavior-tracker#readme",
+  "homepage": "https://github.com/RandyDpoe45/web-behavior-tracker#readme",
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.19",

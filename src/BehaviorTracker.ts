@@ -1,4 +1,4 @@
-import { BehaviorEvent, BehaviorMetrics, BehaviorInsights, TrackingOptions, FormField } from './types.js';
+import { BehaviorEvent, BehaviorMetrics, BehaviorInsights, TrackingOptions, FormField, ElementState } from './types.js';
 
 export class BehaviorTracker {
   private events: BehaviorEvent[] = [];
@@ -634,6 +634,22 @@ export class BehaviorTracker {
     const copyPasteEvents = this.events.filter(e => ['copy', 'paste', 'cut'].includes(e.type));
     if (copyPasteEvents.length > 0) {
       patterns.push(`${copyPasteEvents.length} copy-paste operations detected`);
+      
+      // Detect specific copy-paste patterns
+      const copyCount = copyPasteEvents.filter(e => e.type === 'copy').length;
+      const pasteCount = copyPasteEvents.filter(e => e.type === 'paste').length;
+      
+      if (copyCount > 0 && pasteCount === 0) {
+        patterns.push('Copy operations without paste detected (potential data harvesting)');
+      }
+      
+      if (copyPasteEvents.length > 10) {
+        patterns.push('Excessive copy-paste operations detected');
+      }
+      
+      if (this.detectRapidCopyPasteSequence()) {
+        patterns.push('Rapid copy-paste sequence detected (potential automation)');
+      }
     }
 
     // Detect rapid input events as fallback for copy-paste detection
@@ -661,10 +677,59 @@ export class BehaviorTracker {
     if (metrics.fieldChanges / metrics.fieldInteractions > 0.8) score += 0.2;
     if (metrics.mouseInteractions < 5) score += 0.1;
 
+    // Copy-paste behavior risk (fraud detection patterns)
+    const totalCopyPasteOps = metrics.copyCount + metrics.pasteCount + metrics.cutCount;
+    const totalFieldInteractions = metrics.fieldInteractions || 1;
+    
+    // High copy-paste ratio indicates potential automation or data harvesting
+    const copyPasteRatio = totalCopyPasteOps / totalFieldInteractions;
+    if (copyPasteRatio > 0.5) score += 0.25; // More than 50% of interactions are copy-paste
+    else if (copyPasteRatio > 0.3) score += 0.15; // 30-50% copy-paste ratio
+    else if (copyPasteRatio > 0.1) score += 0.05; // 10-30% copy-paste ratio (normal usage)
+    
+    // Excessive copy-paste operations (potential data scraping)
+    if (totalCopyPasteOps > 10) score += 0.2; // More than 10 copy-paste operations
+    else if (totalCopyPasteOps > 5) score += 0.1; // 5-10 copy-paste operations
+    
+    // Copy without paste pattern (potential data harvesting)
+    if (metrics.copyCount > 0 && metrics.pasteCount === 0) score += 0.15;
+    
+    // Rapid copy-paste sequence (potential automation)
+    const rapidCopyPaste = this.detectRapidCopyPasteSequence();
+    if (rapidCopyPaste) score += 0.2;
+
     // Pattern-based risk
     score += suspiciousPatterns.length * 0.1;
 
     return Math.min(score, 1);
+  }
+
+  private detectRapidCopyPasteSequence(): boolean {
+    const copyPasteEvents = this.events.filter(e => ['copy', 'paste', 'cut'].includes(e.type));
+    
+    // Check for rapid copy-paste sequences (multiple operations within 2 seconds)
+    for (let i = 1; i < copyPasteEvents.length; i++) {
+      const timeDiff = copyPasteEvents[i].timestamp - copyPasteEvents[i - 1].timestamp;
+      if (timeDiff < 2000) { // Less than 2 seconds between operations
+        return true;
+      }
+    }
+    
+    // Check for copy-paste burst (3+ operations within 5 seconds)
+    let burstCount = 0;
+    const burstWindow = 5000; // 5 seconds
+    const now = Date.now();
+    
+    for (const event of copyPasteEvents) {
+      if (now - event.timestamp <= burstWindow) {
+        burstCount++;
+        if (burstCount >= 3) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
   }
 
   private calculateCompletionRate(): number {
@@ -690,8 +755,8 @@ export class BehaviorTracker {
     this.sessionId = this.getOrCreateSessionId();
   }
 
-  private getElementState(element: HTMLElement): Record<string, unknown> {
-    const state: Record<string, unknown> = {};
+  private getElementState(element: HTMLElement): ElementState {
+    const state: ElementState = {};
 
     if (element instanceof HTMLInputElement) {
       state.checked = element.checked;
