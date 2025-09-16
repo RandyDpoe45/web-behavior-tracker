@@ -16,6 +16,8 @@ A framework-agnostic npm package for tracking user behavior on web forms. This p
 - Cross-page session tracking
 - Automatic session persistence
 - Configurable time-based risk thresholds
+- **Modular architecture** with separate event handlers
+- **Browser metadata collection** for device fingerprinting
 
 ## Installation
 
@@ -23,64 +25,81 @@ A framework-agnostic npm package for tracking user behavior on web forms. This p
 npm install web-behavior-tracker
 ```
 
-## Usage
+## Quick Start
 
 ```typescript
 import { BehaviorTracker } from 'web-behavior-tracker';
 
-// Create a new tracker instance with optional configuration
+// Create a new tracker instance
 const tracker = new BehaviorTracker({
   trackMouseMovements: true,
   trackFocusBlur: true,
   trackInputChanges: true,
   trackClicks: true,
-  trackCopyPaste: true,   // Track copy-paste operations (default: true)
+  trackCopyPaste: true,
   riskThreshold: 0.7,
-  minTimeSpent: 10000,    // 10 seconds - minimum time before considering it suspicious
-  maxTimeSpent: 600000,   // 10 minutes - maximum time before considering it suspicious
-  throttleDelay: 150      // 150ms throttle delay to prevent excessive event tracking
+  minTimeSpent: 10000,    // 10 seconds minimum
+  maxTimeSpent: 600000,   // 10 minutes maximum
+  throttleDelay: 150      // 150ms throttle delay
 });
 
-// Start tracking user behavior
+// Start tracking
 tracker.startTracking();
 
-// Start tracking with session reset (clears previous session data)
-tracker.startTracking(true);
-
-// Later, when you want to stop tracking
-tracker.stopTracking();
-
-// Get metrics about user behavior
-const metrics = tracker.getMetrics();
-console.log('Time spent:', metrics.timeSpent);
-console.log('Field interactions:', metrics.fieldInteractions);
-console.log('Field changes:', metrics.fieldChanges);
-console.log('Copy operations:', metrics.copyCount);
-console.log('Paste operations:', metrics.pasteCount);
-console.log('Cut operations:', metrics.cutCount);
-
-// Get insights and risk assessment
+// Get insights
 const insights = tracker.getInsights();
 console.log('Risk score:', insights.riskScore);
 console.log('Suspicious patterns:', insights.suspiciousPatterns);
-console.log('Completion rate:', insights.completionRate);
+```
 
-// Get all tracked events
-const events = tracker.getEvents();
+## Architecture
 
-// Get the current session ID
-const sessionId = tracker.getSessionId();
+The package uses a modular architecture with separate event handlers for better maintainability:
 
-// Clear the current session data
-tracker.clearSession();
+```
+src/
+├── BehaviorTracker.ts          # Main behavior tracking class
+├── BrowserMetadataCollector.ts # Browser metadata collection
+├── InputEventHandler.ts        # Input, delete, and autocomplete events
+├── FormEventHandler.ts         # Form-specific events (select, submit, etc.)
+├── MouseEventHandler.ts        # Mouse events (click, focus, blur, etc.)
+├── ClipboardEventHandler.ts    # Clipboard events (copy, paste, cut)
+├── CustomEventHandler.ts       # Custom events (user-defined events)
+├── utils.ts                    # Shared utility functions
+├── types.ts                    # TypeScript type definitions
+└── index.ts                    # Main exports
+```
+
+### Usage Patterns
+
+#### 1. Behavior Tracking Only
+```javascript
+import { BehaviorTracker } from './src/BehaviorTracker.js';
+
+const tracker = new BehaviorTracker();
+tracker.startTracking();
+const insights = tracker.getInsights();
+```
+
+#### 2. Browser Metadata Only
+```javascript
+import { BrowserMetadataCollector } from './src/BrowserMetadataCollector.js';
+
+const metadata = BrowserMetadataCollector.getBrowserMetadata();
+const fingerprint = BrowserMetadataCollector.getBrowserFingerprint();
+```
+
+#### 3. Individual Event Handlers
+```javascript
+import { InputEventHandler, FormEventHandler } from './src/index.js';
+
+const inputHandler = new InputEventHandler({ trackInputChanges: true });
+const formHandler = new FormEventHandler({ trackInputChanges: true });
 ```
 
 ## Copy-Paste Tracking
 
-The library now includes comprehensive copy-paste tracking capabilities:
-
 ### Features
-
 - **Explicit Event Tracking**: Captures `copy`, `paste`, and `cut` events on form elements
 - **Clipboard Data**: Records clipboard content and data types when available
 - **Element Context**: Tracks which form field the operation occurred on
@@ -88,7 +107,6 @@ The library now includes comprehensive copy-paste tracking capabilities:
 - **Fallback Detection**: Uses rapid input events as indicators of copy-paste behavior
 
 ### Usage
-
 ```typescript
 // Copy-paste tracking is enabled by default
 const tracker = new BehaviorTracker({
@@ -104,20 +122,9 @@ console.log('Cut operations:', metrics.cutCount);
 // Get all events including copy-paste events
 const events = tracker.getEvents();
 const copyPasteEvents = events.filter(e => ['copy', 'paste', 'cut'].includes(e.type));
-
-// Each copy-paste event includes:
-copyPasteEvents.forEach(event => {
-  console.log('Event type:', event.type);
-  console.log('Element:', event.elementId);
-  console.log('Clipboard data:', event.clipboardData);
-  console.log('Timestamp:', new Date(event.timestamp));
-});
 ```
 
 ### Event Data Structure
-
-Copy-paste events include additional `clipboardData` information:
-
 ```typescript
 interface ClipboardData {
   types: string[];  // Available clipboard data types (e.g., ['text/plain'])
@@ -125,22 +132,11 @@ interface ClipboardData {
 }
 ```
 
-### Disabling Copy-Paste Tracking
-
-If you don't want to track copy-paste operations:
-
-```typescript
-const tracker = new BehaviorTracker({
-  trackCopyPaste: false
-});
-```
-
 ## Custom Events
 
 Track custom user actions and business events with rich data:
 
 ### Basic Usage
-
 ```typescript
 // Track a simple custom event
 tracker.trackCustomEvent('user_action', { action: 'button_clicked' });
@@ -157,8 +153,35 @@ tracker.trackCustomEvent('conversion', {
 });
 ```
 
-### Custom Event Methods
+### Advanced Custom Event Examples
+```typescript
+// Track user journey events
+tracker.trackCustomEvent('page_navigation', {
+  from: '/home',
+  to: '/products',
+  method: 'click',
+  element: 'navigation-link'
+});
 
+// Track business metrics
+tracker.trackCustomEvent('conversion', {
+  type: 'purchase',
+  value: 150.00,
+  currency: 'USD',
+  productIds: ['123', '456'],
+  customerId: 'user_789'
+});
+
+// Track user behavior patterns
+tracker.trackCustomEvent('scroll_behavior', {
+  scrollDepth: 0.75,
+  scrollDirection: 'down',
+  timeOnPage: 45000,
+  elementInView: 'product-gallery'
+});
+```
+
+### Custom Event Methods
 - `trackCustomEvent(eventName, customData, target?)` - Creates and logs a custom event
 - `getCustomEvents()` - Gets all custom events
 - `getCustomEventsByName(eventName)` - Gets custom events by name
@@ -169,7 +192,6 @@ tracker.trackCustomEvent('conversion', {
 - `clearCustomEvents()` - Clears all custom events
 
 ### Custom Event Statistics
-
 ```typescript
 const stats = tracker.getCustomEventStats();
 console.log(stats);
@@ -187,19 +209,56 @@ console.log(stats);
 // }
 ```
 
-### Custom Events in Insights
+## Browser Metadata Collection
 
-Custom events are automatically included in behavior insights:
+The `BrowserMetadataCollector` provides comprehensive browser and device information:
 
+### Basic Browser Information
+- `userAgent`: Full user agent string
+- `platform`: Operating system platform (using modern User-Agent Client Hints API)
+- `platformVersion`: Platform version (when available)
+- `browserName`: Browser name (Chrome, Firefox, Safari, Edge)
+- `browserVersion`: Browser version (when available)
+- `isMobile`: Whether the device is mobile
+- `language`: User's preferred language
+- `languages`: Array of preferred languages
+- `cookieEnabled`: Whether cookies are enabled
+- `onLine`: Whether browser is online
+- `hardwareConcurrency`: Number of CPU cores
+- `maxTouchPoints`: Maximum touch points supported
+
+### Screen & Display Information
+- `screenWidth/Height`: Screen dimensions
+- `screenAvailWidth/Height`: Available screen dimensions
+- `screenColorDepth`: Color depth
+- `screenPixelDepth`: Pixel depth
+- `viewportWidth/Height`: Browser viewport dimensions
+- `devicePixelRatio`: Device pixel ratio
+
+### Usage
 ```typescript
-const insights = tracker.getInsights();
-console.log('Custom event stats:', insights.customEventStats);
-console.log('Custom event count in metrics:', insights.browserMetadata);
+import { BrowserMetadataCollector } from 'web-behavior-tracker';
+
+// Get basic metadata
+const metadata = BrowserMetadataCollector.getBrowserMetadata();
+console.log('Platform:', metadata.platform);
+console.log('Browser:', metadata.browserName);
+console.log('Is Mobile:', metadata.isMobile);
+
+// Get browser fingerprint
+const fingerprint = BrowserMetadataCollector.getBrowserFingerprint();
+console.log('Fingerprint:', fingerprint);
+
+// Get additional metadata (advanced system information)
+const additionalMetadata = BrowserMetadataCollector.getAdditionalMetadata();
+
+// Get high-entropy metadata (requires user permission)
+const highEntropyMetadata = await BrowserMetadataCollector.getHighEntropyMetadata();
 ```
 
 ## Cross-Page Tracking
 
-The package automatically maintains a session across page navigations using the browser's sessionStorage. This means:
+The package automatically maintains a session across page navigations using the browser's sessionStorage:
 
 - User behavior is tracked across all pages in the same session
 - Data persists even when the user navigates between pages
@@ -207,33 +266,22 @@ The package automatically maintains a session across page navigations using the 
 - Session data is automatically saved when the user leaves a page
 - Session data is cleared when the browser tab is closed
 
-To use cross-page tracking:
-
-1. Initialize the tracker on your main page or app entry point
-2. The tracker will automatically maintain the session across page navigations
-3. Use `getSessionId()` to get the current session identifier
-4. Use `clearSession()` to manually clear the session data
-
-### Session Reset on Start
-
-The `startTracking()` method now accepts an optional `reset` parameter:
-
+### Session Management
 ```typescript
 // Start tracking without clearing existing session data
 tracker.startTracking();
 
 // Start tracking and clear all previous session data
 tracker.startTracking(true);
+
+// Get the current session ID
+const sessionId = tracker.getSessionId();
+
+// Clear the current session data
+tracker.clearSession();
 ```
 
-This is useful when you want to:
-- Start fresh tracking for a new user session
-- Clear accumulated data before starting a new form flow
-- Reset tracking state programmatically without calling `clearSession()` separately
-
 ## Configuration Options
-
-The `BehaviorTracker` constructor accepts the following options:
 
 ```typescript
 interface TrackingOptions {
@@ -253,11 +301,8 @@ interface TrackingOptions {
 ### Time-Based Risk Assessment
 
 The package uses time-based thresholds to assess risk:
-
 - If a user spends less than `minTimeSpent` (default: 5 seconds) on the form, it increases the risk score by 0.3
 - If a user spends more than `maxTimeSpent` (default: 5 minutes) on the form, it increases the risk score by 0.2
-
-You can customize these thresholds based on your form's complexity and expected completion time:
 
 ```typescript
 // Example: Custom time thresholds for a complex form
@@ -275,19 +320,15 @@ const tracker = new BehaviorTracker({
 
 ### Event Throttling
 
-The package includes built-in event throttling to prevent excessive event tracking and improve performance:
-
-- Events are throttled based on the `throttleDelay` parameter (default: 100ms)
-- This prevents rapid-fire events from overwhelming the tracking system
-- You can adjust the throttle delay based on your needs:
+Events are throttled based on the `throttleDelay` parameter (default: 100ms) to prevent excessive event tracking:
 
 ```typescript
-// Example: More aggressive throttling for high-frequency events
+// More aggressive throttling for high-frequency events
 const tracker = new BehaviorTracker({
   throttleDelay: 200      // 200ms throttle delay
 });
 
-// Example: Less throttling for more detailed tracking
+// Less throttling for more detailed tracking
 const tracker = new BehaviorTracker({
   throttleDelay: 50       // 50ms throttle delay
 });
@@ -295,16 +336,17 @@ const tracker = new BehaviorTracker({
 
 ## Metrics
 
-The package provides the following metrics:
+The package provides comprehensive metrics:
 
 - Time spent on the form
 - Number of field interactions
 - Number of field changes
 - Focus and blur counts
 - Mouse interaction counts
-- **Copy, paste, and cut operation counts**
+- Copy, paste, and cut operation counts
 - Cross-page navigation patterns
 - Page-specific interaction data
+- Custom event counts and statistics
 
 ## Insights
 
@@ -317,6 +359,41 @@ The insights include:
 - Field interaction order
 - Cross-page behavior patterns
 - Session-level risk assessment
+- Custom event statistics
+- Browser metadata and capabilities
+
+## Use Cases
+
+### Fraud Detection
+- Detect unusual browser configurations
+- Identify automated browsers
+- Track device fingerprinting
+- Monitor suspicious behavior patterns
+
+### User Experience
+- Optimize for different screen sizes
+- Adapt to user's language preferences
+- Monitor performance metrics
+- Track user journey and engagement
+
+### Analytics
+- Understand user demographics
+- Track device capabilities
+- Monitor browser usage patterns
+- Business intelligence and conversion tracking
+
+### A/B Testing
+- Variant selection tracking
+- Test completion rates
+- User behavior differences
+- Conversion impact analysis
+
+## Privacy Considerations
+
+- Some metadata requires user permission (geolocation, battery, media devices)
+- Be mindful of privacy regulations (GDPR, CCPA)
+- Consider anonymizing sensitive data
+- Only collect necessary information
 
 ## Contributing
 
@@ -324,4 +401,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-MIT 
+MIT
