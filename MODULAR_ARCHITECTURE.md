@@ -12,6 +12,7 @@ src/
 ├── FormEventHandler.ts         # Form-specific events (select, submit, etc.)
 ├── MouseEventHandler.ts        # Mouse events (click, focus, blur, etc.)
 ├── ClipboardEventHandler.ts    # Clipboard events (copy, paste, cut)
+├── CustomEventHandler.ts       # Custom events (user-defined events)
 ├── utils.ts                    # Shared utility functions
 ├── types.ts                    # TypeScript type definitions
 └── index.ts                    # Main exports
@@ -75,6 +76,24 @@ src/
 - Clipboard data extraction
 - Form element filtering
 - Event type detection
+
+### 5. CustomEventHandler
+**Purpose**: Handles custom events that can be manually triggered by the application
+
+**Key Methods**:
+- `createCustomEvent(eventName, customData, target, onEventCreated)` - Creates custom events
+- `getCustomEvents()` - Gets all custom events
+- `getCustomEventsByName(eventName)` - Gets events by name
+- `getCustomEventsStats()` - Gets event statistics
+- `hasCustomEvent(eventName)` - Checks if event exists
+- `getLastCustomEvent(eventName?)` - Gets last occurrence
+- `clearCustomEvents()` - Clears all custom events
+
+**Features**:
+- Flexible event creation with custom data
+- Separate custom event storage
+- Rich querying and statistics
+- Business intelligence tracking
 
 ## Utility Functions (TrackingUtils)
 
@@ -198,6 +217,64 @@ const event = TrackingUtils.createBehaviorEvent('click', element, 'button clicke
 - Easy to add new event types
 - Simple to create custom event handlers
 - Modular updates and improvements
+
+## Custom Events Usage
+
+### 1. **Basic Custom Event Tracking**
+```javascript
+import { BehaviorTracker } from './src/index.js';
+
+const tracker = new BehaviorTracker();
+
+// Track simple custom events
+tracker.trackCustomEvent('user_action', { action: 'button_clicked' });
+
+// Track with target element
+tracker.trackCustomEvent('form_error', { field: 'email' }, document.getElementById('email'));
+
+// Track complex business events
+tracker.trackCustomEvent('conversion', {
+  type: 'purchase',
+  value: 150.00,
+  productIds: ['123', '456']
+});
+```
+
+### 2. **Custom Event Querying**
+```javascript
+// Get all custom events
+const allCustomEvents = tracker.getCustomEvents();
+
+// Get events by name
+const conversionEvents = tracker.getCustomEventsByName('conversion');
+
+// Get statistics
+const stats = tracker.getCustomEventStats();
+console.log('Total custom events:', stats.totalCustomEvents);
+console.log('Events by name:', stats.eventsByName);
+
+// Check if event exists
+if (tracker.hasCustomEvent('conversion')) {
+  console.log('User has converted!');
+}
+```
+
+### 3. **Custom Events in Insights**
+```javascript
+const insights = tracker.getInsights();
+console.log('Custom event stats:', insights.customEventStats);
+console.log('Custom event count:', insights.browserMetadata);
+```
+
+### 4. **Using CustomEventHandler Directly**
+```javascript
+import { CustomEventHandler } from './src/index.js';
+
+const customHandler = new CustomEventHandler({});
+customHandler.createCustomEvent('test_event', { data: 'test' }, undefined, (event) => {
+  console.log('Custom event created:', event);
+});
+```
 
 ## Migration Guide
 

@@ -32,6 +32,15 @@ console.log('High-Entropy Metadata:', highEntropyMetadata);
 const browserMetadata = BrowserMetadataCollector.getBrowserMetadata();
 const browserFingerprint = BrowserMetadataCollector.getBrowserFingerprint();
 const browserCapabilities = BrowserMetadataCollector.getBrowserCapabilities();
+
+// Track custom events
+tracker.trackCustomEvent('user_action', { action: 'button_clicked', buttonId: 'submit' });
+tracker.trackCustomEvent('conversion', { type: 'purchase', value: 150.00 });
+
+// Get custom event data
+const customEvents = tracker.getCustomEvents();
+const conversionEvents = tracker.getCustomEventsByName('conversion');
+const customStats = tracker.getCustomEventStats();
 ```
 
 ## Available Browser Metadata
@@ -111,6 +120,69 @@ The `getHighEntropyMetadata()` method provides detailed information using the Us
 - `fullVersionList`: Array of all browser components and versions
 
 **Note**: This method is async and requires user permission in some browsers.
+
+## Custom Events
+
+The BehaviorTracker supports tracking custom events with rich data:
+
+### Basic Custom Event Tracking
+
+```javascript
+// Track a simple custom event
+tracker.trackCustomEvent('user_action', { action: 'button_clicked' });
+
+// Track with target element
+tracker.trackCustomEvent('form_error', { field: 'email' }, document.getElementById('email'));
+
+// Track complex business events
+tracker.trackCustomEvent('conversion', {
+  type: 'purchase',
+  value: 150.00,
+  productIds: ['123', '456'],
+  customerId: 'user_789'
+});
+```
+
+### Custom Event Methods
+
+- **`trackCustomEvent(eventName, customData, target?)`**: Creates and logs a custom event
+- **`getCustomEvents()`**: Gets all custom events
+- **`getCustomEventsByName(eventName)`**: Gets custom events by name
+- **`getCustomEventsCount()`**: Gets total custom event count
+- **`getCustomEventsCountByName(eventName)`**: Gets count for specific event name
+- **`getCustomEventStats()`**: Gets detailed custom event statistics
+- **`hasCustomEvent(eventName)`**: Checks if event has been triggered
+- **`getLastCustomEvent(eventName?)`**: Gets last occurrence of event
+- **`clearCustomEvents()`**: Clears all custom events
+
+### Custom Event Statistics
+
+```javascript
+const stats = tracker.getCustomEventStats();
+console.log(stats);
+// Output:
+// {
+//   totalCustomEvents: 15,
+//   eventsByName: {
+//     'user_action': 5,
+//     'conversion': 2,
+//     'error': 3,
+//     'engagement': 5
+//   },
+//   recentEvents: [...], // Last 10 events
+//   lastEvent: {...} // Most recent event
+// }
+```
+
+### Custom Events in Insights
+
+Custom events are automatically included in behavior insights:
+
+```javascript
+const insights = tracker.getInsights();
+console.log('Custom event stats:', insights.customEventStats);
+console.log('Custom event count in metrics:', insights.browserMetadata);
+```
 
 ## BrowserMetadataCollector
 

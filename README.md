@@ -6,6 +6,7 @@ A framework-agnostic npm package for tracking user behavior on web forms. This p
 
 - Track user interactions with form fields (focus, blur, input, change)
 - **Track copy-paste operations** (copy, paste, cut events with clipboard data)
+- **Track custom events** with rich data for business intelligence
 - Monitor mouse movements and clicks
 - Calculate risk scores based on user behavior
 - Detect suspicious patterns (rapid form filling, copy-paste behavior, etc.)
@@ -132,6 +133,68 @@ If you don't want to track copy-paste operations:
 const tracker = new BehaviorTracker({
   trackCopyPaste: false
 });
+```
+
+## Custom Events
+
+Track custom user actions and business events with rich data:
+
+### Basic Usage
+
+```typescript
+// Track a simple custom event
+tracker.trackCustomEvent('user_action', { action: 'button_clicked' });
+
+// Track with target element
+tracker.trackCustomEvent('form_error', { field: 'email' }, document.getElementById('email'));
+
+// Track complex business events
+tracker.trackCustomEvent('conversion', {
+  type: 'purchase',
+  value: 150.00,
+  productIds: ['123', '456'],
+  customerId: 'user_789'
+});
+```
+
+### Custom Event Methods
+
+- `trackCustomEvent(eventName, customData, target?)` - Creates and logs a custom event
+- `getCustomEvents()` - Gets all custom events
+- `getCustomEventsByName(eventName)` - Gets custom events by name
+- `getCustomEventsCount()` - Gets total custom event count
+- `getCustomEventStats()` - Gets detailed custom event statistics
+- `hasCustomEvent(eventName)` - Checks if event has been triggered
+- `getLastCustomEvent(eventName?)` - Gets last occurrence of event
+- `clearCustomEvents()` - Clears all custom events
+
+### Custom Event Statistics
+
+```typescript
+const stats = tracker.getCustomEventStats();
+console.log(stats);
+// Output:
+// {
+//   totalCustomEvents: 15,
+//   eventsByName: {
+//     'user_action': 5,
+//     'conversion': 2,
+//     'error': 3,
+//     'engagement': 5
+//   },
+//   recentEvents: [...], // Last 10 events
+//   lastEvent: {...} // Most recent event
+// }
+```
+
+### Custom Events in Insights
+
+Custom events are automatically included in behavior insights:
+
+```typescript
+const insights = tracker.getInsights();
+console.log('Custom event stats:', insights.customEventStats);
+console.log('Custom event count in metrics:', insights.browserMetadata);
 ```
 
 ## Cross-Page Tracking
